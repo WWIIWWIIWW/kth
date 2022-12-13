@@ -30,6 +30,9 @@ def get_snapshots_time(snapshots_dir, savepath: str = '', savename: str = '', sa
     """
     Collect number of snapshots from snapshots_dir, return array containing it.
     """
+
+    print("Getting snapshots....")
+
     snapshot_list = [float(i) for i in os.listdir(snapshots_dir)]
     # snapshot_list = [int(num) if float(num).is_integer() else float(num) for num in os.listdir(snapshots_dir)]
     snapshot_arr = np.sort(np.asarray(snapshot_list))
@@ -150,10 +153,9 @@ def get_corre_matrix(data_matrix, var_name: str = '', savepath: str = '', savena
     Get the correlation matrix of shape [l_snapshots, l_snapshots].
     This is the reason snapshot pod takes much less time than normal POD
     """
+    print("Building correlation matrix....")
 
     l_snapshots = data_matrix.shape[1]
-
-    print("Start building correlation matrix....")
 
     """same as below, but this one is slow
     corr_matrix = np.zeros([l_snapshots,l_snapshots],'float')
@@ -195,6 +197,8 @@ def get_data_matrix(dimensions: np.ndarray = None, snapshots_dir: str = '', snap
     m_samples = dimensions[0]
     n_features = dimensions[1]
     l_snapshots = dimensions[2]
+
+    print("Getting data matrix....")
 
     start_time = clock.time()
     # Initialize the matrix
@@ -255,6 +259,8 @@ def eigen_decomposition(corr_matrix, savepath: str = '', save: bool = False):
     """
     Get the eigenvalues and eigenvectors.
     """
+    print("Performing eigen decompositions of data matrix....")
+
     start_time = clock.time()
     [value, vector] = np.linalg.eigh(corr_matrix)  # eig could give complex value, so we use eigh
 
@@ -278,6 +284,7 @@ def compute_modes(dimensions, eig_value, eig_vector, data_matrix, l_modes='0', s
     Compute POD_modes_matrix of shape [m_samples, n_features, l_modes] where l_modes<l_snapshots
     as we don't need to compute all modes.
     """
+    print("Computing modes....")
 
     eigen_value = eig_value
     eigen_vector = eig_vector
@@ -420,6 +427,8 @@ def export_mode_vtk(mode, mesh, var_name: str = '', savename: str = "", savepath
     """
     Export vtk contaning appended l_modes where l_modes < l_snapshots
     """
+    print("Exporting mode vtk....")
+
     savepath = savepath + '../' + var_name + 'modes/'
     os.makedirs(savepath, exist_ok=True)
     mesh.clear_data()
