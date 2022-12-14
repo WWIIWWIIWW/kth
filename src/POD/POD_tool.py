@@ -39,7 +39,7 @@ def get_snapshots_time(snapshots_dir, savepath: str = '', savename: str = '', sa
 
     snapshot_list = [int(x) if x == int(x) else x for x in snapshot_arr]
 
-    #print(snapshot_arr)
+    # print(snapshot_arr)
 
     if save:
         os.makedirs(savepath, exist_ok=True)
@@ -76,7 +76,7 @@ def get_dimension_mesh(snapshots_dir: str = '', snapshot_time: np.ndarray = None
     """
 
     if isinstance(snapshot_time, np.ndarray):
-        print ("snapshot_time is an array")
+        print("snapshot_time is an array, it's ok...continuing...")
         snapshot_time = [int(x) if x == int(x) else x for x in snapshot_time]
 
     path = snapshots_dir + str(snapshot_time[0]) + "/"  # use str for concatenate directory
@@ -202,14 +202,14 @@ def get_data_matrix(dimensions: np.ndarray = None, snapshots_dir: str = '', snap
 
     start_time = clock.time()
     # Initialize the matrix
-    
+
     matrix = np.zeros([m_samples * n_features, l_snapshots], dtype=np.float64);
     for idx_snapshots, time in enumerate(snapshot_time):
         path = snapshots_dir + str(time) + "/"
         new_path = update_path(path, var_name)
 
         df, mesh = import_vtk_data(path=new_path, var_name=var_name)
-        matrix[:, idx_snapshots] = np.reshape(df.to_numpy(), -1, order = 'F') #np.hstack(df.to_numpy().T)
+        matrix[:, idx_snapshots] = np.reshape(df.to_numpy(), -1, order='F')  # np.hstack(df.to_numpy().T)
 
     print('Data matrix obtained in %.6f s.\n' % (clock.time() - start_time))
     """same as above loop, speed is roughly the same
@@ -325,7 +325,8 @@ def compute_modes(dimensions, eig_value, eig_vector, data_matrix, l_modes='0', s
     return time_coeff, POD_mode_matrix
 
 
-def reconstruct_modes(dimensions, time_coeff, POD_mode_matrix, n_snapshots_to_reconstruct=1, n_modes_to_reconstruct=0, var_name: str = '', savepath: str = ''):
+def reconstruct_modes(dimensions, time_coeff, POD_mode_matrix, n_snapshots_to_reconstruct=1, n_modes_to_reconstruct=0,
+                      var_name: str = '', savepath: str = ''):
     """
     Compute from "POD_mode_matrix" of shape = [n_features*m_samples, l_snapshots] or [n_features*m_samples, l_modes]
     and from "time_coeff" of shape = [l_snapshots, l_snapshots] or [l_modes, l_modes],
@@ -341,7 +342,7 @@ def reconstruct_modes(dimensions, time_coeff, POD_mode_matrix, n_snapshots_to_re
     l_snapshots = dimensions[2]
 
     if n_snapshots_to_reconstruct > l_snapshots:
-        print ("No sufficient snapshots available to reconstruct.")
+        print("No sufficient snapshots available to reconstruct.")
         exit()
 
     if n_modes_to_reconstruct in ('All', 'all'):
@@ -351,22 +352,24 @@ def reconstruct_modes(dimensions, time_coeff, POD_mode_matrix, n_snapshots_to_re
         reconstructed_mode_matrix = np.zeros([m_samples, n_features, l_snapshots], dtype=np.float64)
 
     if isinstance(n_modes_to_reconstruct, int):
-        reconstructed_mode_matrix = np.zeros([m_samples * n_features, n_snapshots_to_reconstruct, n_modes_to_reconstruct + 1], dtype=np.float64)
+        reconstructed_mode_matrix = np.zeros(
+            [m_samples * n_features, n_snapshots_to_reconstruct, n_modes_to_reconstruct + 1], dtype=np.float64)
         for mode in np.arange(n_modes_to_reconstruct + 1):
             # 0 column of POD_mode_matrix is the actual mode for mode 0: phi
             # 0 row of time_coeff is the time coefficient of mode 0: a(t)
             # we reconstruct mode 0 as a(t0) * phi + a(t1) * phi + ....
             # column of reconstructed mode corresponds to the mode variation in time.
-            #print ("mode: ", mode)
-            #print (" POD_mode_matrix Shape = ", POD_mode_matrix[:, mode].shape)
-            #print ("time_coeff Shape = ", time_coeff.shape)
+            # print ("mode: ", mode)
+            # print (" POD_mode_matrix Shape = ", POD_mode_matrix[:, mode].shape)
+            # print ("time_coeff Shape = ", time_coeff.shape)
             reconstructed_mode = np.outer(POD_mode_matrix[:, mode], time_coeff[mode, :n_snapshots_to_reconstruct])
             reconstructed_mode_matrix[:, :n_snapshots_to_reconstruct, mode] = reconstructed_mode
 
     return reconstructed_mode_matrix
 
 
-def export_reconstructed_mode_vtk(dimensions, reconstructed_mode_matrix, mesh, n_snapshots_to_export=1, n_modes_to_export=0,
+def export_reconstructed_mode_vtk(dimensions, reconstructed_mode_matrix, mesh, n_snapshots_to_export=1,
+                                  n_modes_to_export=0,
                                   var_name: str = '', savename: str = "", savepath: str = ''):
     """
     Export vtk containing appended l_modes where l_modes < l_snapshots
@@ -391,14 +394,14 @@ def export_reconstructed_mode_vtk(dimensions, reconstructed_mode_matrix, mesh, n
     if isinstance(n_modes_to_export, list):
         print("Detected listed modes, export accumulated modes!")
         mode_2D = reconstructed_mode_matrix[:, :, n_modes_to_export]
-        #print(mode_2D.shape)
+        # print(mode_2D.shape)
         mode_2D = np.sum(mode_2D, axis=2)
-        #print(mode_2D.shape)
+        # print(mode_2D.shape)
         for idx_snapshots in range(n_snapshots_to_export):
             print("    Exporting snapshot {}.".format(idx_snapshots))
             path = savepath + "{}{}.".format(savename, n_modes_to_export) + str(idx_snapshots) + ".vtk"
             mode_1D = mode_2D[:, idx_snapshots]
-            #print(mode_1D.shape)
+            # print(mode_1D.shape)
             for idx_features in range(n_features):
                 start = m_samples * idx_features
                 end = m_samples * (idx_features + 1)
@@ -460,7 +463,7 @@ def plt_eigen_value_spectrum(eig_value: np.array = None, modeminmax=[float, floa
 
     x = np.arange(modeminmax[0], modeminmax[1])
     y = eig_value[modeminmax[0]: modeminmax[1]] / sum(eig_value[1:]) * 100
-    #print(eig_value, sum(eig_value))
+    # print(eig_value, sum(eig_value))
     fig, ax = _set_plot_settings()
     ax.scatter(x, y, marker="s", color="black")
     # ax.plot(x, y, color="black", ls="-")
@@ -495,7 +498,7 @@ def plt_power_spectrum(time_coeff: np.array = None, snapshot_time: np.array = No
     f = 1 / (snapshot_time[1] - snapshot_time[0])
 
     if Strouhal:
-        print ("To calculate Strouhal number, you need to, ")
+        print("To calculate Strouhal number, you need to, ")
         xlabel = 'Strouhal Number'
         D = float(input("Input the Characteristic length [m] (Enter to Confirm):"))
         U = float(input("Input the Characteristic velocity [m/s] (Enter to Confirm):"))
@@ -532,23 +535,34 @@ def plt_power_spectrum(time_coeff: np.array = None, snapshot_time: np.array = No
     plt.close(fig)
 
 
-def plt_phase_portrait(time_coeff: np.array = None, modes=None, save: bool = False,
+def plt_phase_portrait(time_coeff: np.array = None, modes=None, JPDF=True, save: bool = False,
                        figname: str = None, figpath: str = None):
     if modes is None:
         modes = [1, 2]
     figname = figname + str(modes[0]) + "-" + str(modes[1])
     fig, ax = _set_plot_settings()
-    ax.scatter(time_coeff[modes[0], :], time_coeff[modes[1], :], color="blue")
-    ax.set_aspect('equal', 'datalim')
 
-    ax.set_xlabel(xlabel="a{}(t)".format(modes[0]), fontsize=16)
-    ax.set_ylabel(ylabel="a{}(t)".format(modes[1]), fontsize=16)
+    if JPDF == True:
+        import seaborn as sns
+        import matplotlib.cm as cm
+        sns.set_style('darkgrid')
+        ax = sns.jointplot(time_coeff[modes[0], :], time_coeff[modes[1], :], cmap=cm.jet,
+                      kind='kde', fill=False) #'hot_r'
+        ax.ax_joint.set_xlabel(xlabel="a{}(t)".format(modes[0]), fontsize=16)
+        ax.ax_joint.set_ylabel(ylabel="a{}(t)".format(modes[1]), fontsize=16)
+    else:
+        ax.scatter(time_coeff[modes[0], :], time_coeff[modes[1], :], color="blue")
+        ax.set_aspect('equal', 'datalim')
 
-    fig.tight_layout()
+        ax.set_xlabel(xlabel="a{}(t)".format(modes[0]), fontsize=16)
+        ax.set_ylabel(ylabel="a{}(t)".format(modes[1]), fontsize=16)
+
+    plt.tight_layout()
 
     _save_fig(save, figname, figpath)
 
     plt.close(fig)
+
 
 def _set_plot_settings(nrows: int = 1, ncols: int = 1) -> Tuple[plt.Figure, plt.Subplot]:
     fig, ax = plt.subplots(nrows, ncols, figsize=[7.2, 4])
@@ -563,4 +577,3 @@ def _save_fig(save: bool = False, figname: str = None, figpath: str = None):
         plt.savefig(figpath + figname + '.png')
     else:
         plt.show()
-
