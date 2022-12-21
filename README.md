@@ -2,11 +2,13 @@
 ------------
 ``kth`` contains some packages we build at KTH, Royal Institute of Technology, Sweden for multiple purpose tasks. We will constantly update sub-packages contained in it.
 
-1. cantera collections for flame calculations.
+1. canteraKTH: collections for flame calculations.
 
-2. keyfi collections for dimensional reduction task and combustion visualization - also see [keyfi](https://github.com/marrov/keyfi)
+2. keyfi: collections for dimensional reduction task and combustion visualization - also see [keyfi](https://github.com/marrov/keyfi)
 
-3. NN collections for building all kinds of neural network.
+3. NN: collections for building all kinds of neural network.
+
+4. POD: snapshot POD including pre- and post-processing tools. (contact author if compilation fails because environment.yml is not updated yet.)
 ## Author
 ------------
 [Kai Zhang, KTH, Royal Institute of Technology, Sweden](https://scholar.google.com/citations?user=lfUyemMAAAAJ&hl=en) - Google Scholar
@@ -38,8 +40,11 @@ To deactivate this environment simply type:
 
 ``conda deactivate``
 
-### Usage
+<h3> Usage </h3>
+
 ------------
+<h6>
+
 import keyfi as kf
 
 import canteraKTH as ckth
@@ -47,3 +52,5 @@ import canteraKTH as ckth
 from NN import *
 
 import POD as POD
+
+</h6>
