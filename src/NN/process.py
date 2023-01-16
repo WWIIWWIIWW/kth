@@ -16,3 +16,24 @@ def split_sequence(data: Sequence, n_snapshots: int):
 		X.append(seq_x)
 		y.append(seq_y)
 	return np.array(X), np.array(y)
+
+def get_snapshots_time(snapshots_dir, savepath: str = '', savename: str = '', save: bool = False) -> list:
+    """
+    Collect number of snapshots from snapshots_dir, return array containing it.
+    """
+
+    print("Getting snapshots....")
+
+    snapshot_list = [float(i) for i in os.listdir(snapshots_dir)]
+    # snapshot_list = [int(num) if float(num).is_integer() else float(num) for num in os.listdir(snapshots_dir)]
+    snapshot_arr = np.sort(np.asarray(snapshot_list))
+
+    snapshot_list = [int(x) if x == int(x) else x for x in snapshot_arr]
+
+    # print(snapshot_arr)
+
+    if save:
+        os.makedirs(savepath, exist_ok=True)
+        np.savetxt(savepath + savename + '.txt', snapshot_arr)
+
+    return snapshot_list
