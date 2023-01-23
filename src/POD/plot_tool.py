@@ -161,10 +161,10 @@ def get_rcs(mesh: list = None, lineVector: list = [0, 1, 0],
 
     return boolDict, coord
 
-def plt_MeanvsRadial(data_matrix, coord: np.array = None, boolDict: dict = [],
+def plt_MeanvsRadial(mean, coord: np.array = None,
                      save: bool = False, figname: str = None,
                      figpath: str = None) -> None:
-    y_ = data_matrix[boolDict].mean(axis=1) # to take the mean of each row
+    y_ = mean # to take the mean of each row
     x_ = coord
 
     fig, ax = _set_plot_settings()

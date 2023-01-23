@@ -426,8 +426,8 @@ def compute_time_average(data_matrix, boolDict: dict = [], save: bool = True, sa
     y_ = data_matrix[boolDict].mean(axis=1)
     if save:
         np.savetxt(savepath + savename + '.txt', y_)
-    else:
-        return y_
+
+    return y_
 
 
 def export_mode_vtk(mode, mesh, var_name: str = '', savename: str = "", savepath: str = ''):
