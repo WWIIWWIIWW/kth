@@ -187,7 +187,8 @@ def get_data_matrix(dimensions: np.ndarray = None, snapshots_dir: str = '', snap
 
     m_samples = dimensions[0]
     n_features = dimensions[1]
-    l_snapshots = dimensions[2]
+    # l_snapshots = dimensions[2]
+    l_snapshots = len(snapshot_time)
 
     print("Getting data matrix....")
 
@@ -196,6 +197,7 @@ def get_data_matrix(dimensions: np.ndarray = None, snapshots_dir: str = '', snap
 
     matrix = np.zeros([m_samples * n_features, l_snapshots], dtype=np.float64);
     for idx_snapshots, time in enumerate(snapshot_time):
+        print("Added snapshot = {}s to the data_matrix.".format(time))
         path = snapshots_dir + str(time) + "/"
         new_path = update_path(path, var_name)
 

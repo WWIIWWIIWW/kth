@@ -13,7 +13,7 @@ plt.rcParams.update({'figure.max_open_warning': 0})
 
 
 def plt_eigen_value_spectrum(eig_value: np.array = None, modeminmax=[float, float],
-                             save: bool = False, figname: str = None, figpath: str = None):
+                             save: bool = False, figname: str = None, figpath: str = None) -> None:
     """
     Plot eigen_value_spectrum using sorted eigenvalues
     modeminmax: e.g., [1, 50], plot shows turbulent kinetic energy of modes ranging from 1 to 50.
@@ -42,7 +42,7 @@ def plt_eigen_value_spectrum(eig_value: np.array = None, modeminmax=[float, floa
 
 
 def plt_power_spectrum(time_coeff: np.array = None, snapshot_time: np.array = None, Strouhal: bool = False, l_modes='0',
-                       save: bool = False, figname: str = None, figpath: str = None):
+                       save: bool = False, figname: str = None, figpath: str = None) -> None:
     """
     Plot power spectrum of time_coeff  (normalised amplitude vs frequency)
     if time_coeff has only say 3 rows, they corresponds to the output of 3 modes used in 'compute_modes'.
@@ -94,7 +94,7 @@ def plt_power_spectrum(time_coeff: np.array = None, snapshot_time: np.array = No
 
 
 def plt_phase_portrait(time_coeff: np.array = None, modes: list = None, JPDF: bool = True, save: bool = False,
-                       figname: str = None, figpath: str = None):
+                       figname: str = None, figpath: str = None) -> None:
     if modes is None:
         modes = [1, 2]
     figname = figname + str(modes[0]) + "-" + str(modes[1])
@@ -121,20 +121,16 @@ def plt_phase_portrait(time_coeff: np.array = None, modes: list = None, JPDF: bo
     plt.close(fig)
 
 
-def plt_spatiotemporal(data_matrix, snapshot_time: np.array = None, mesh: list = None, lineVector: list = [0, 1, 0],
-                       lineNormalVector: list = [1, 0, 0], save: bool = False, figname: str = None,
+def plt_spatiotemporal(data_matrix, snapshot_time: np.array = None,
+                       coord: np.array = None, boolDict: dict = [],
+                       save: bool = False, figname: str = None,
                        figpath: str = None) -> None:
+    x_, y_ = np.meshgrid(snapshot_time, coord)
 
-    points = mesh.points
-    pos_idx = lineVector.index(1)  # along which we define the line
-    pos_idx2 = [x + y for x, y in zip(lineVector, lineNormalVector)].index(0)  # along which we find long coordinate
-    minValue = np.unique(abs(points[:, pos_idx])).min()
-    boolDict = (points[:, pos_idx] == minValue) & (points[:, pos_idx2] >= 0)
-    x_, y_ = np.meshgrid(snapshot_time, points[boolDict][:, pos_idx2])
-
+    print(x_.shape, y_.shape, data_matrix[boolDict].shape)
     fig, ax = _set_plot_settings()
     im = ax.contourf(y_, x_, data_matrix[boolDict], cmap=cm.jet)
-    xlabel, ylabel, cbarlabel = _set_label()
+    xlabel, ylabel, cbarlabel = _set_label(cbar=True)
     ax.set_xlabel(xlabel=xlabel, fontsize=16)
     ax.set_ylabel(ylabel=ylabel, fontsize=16)
     cbar = fig.colorbar(im, orientation='vertical')
@@ -146,6 +142,70 @@ def plt_spatiotemporal(data_matrix, snapshot_time: np.array = None, mesh: list =
     plt.close(fig)
 
 
+def get_rcs(mesh: list = None, lineVector: list = [0, 1, 0],
+            lineNormalVector: list = [1, 0, 0]):
+    """
+    Get idx = index or BoolDict = True/False
+    to sort data, return also coordinate
+    along a radial direction.
+    """
+    points = mesh.points
+    pos_idx = lineVector.index(1)  # along which we define the line
+    pos_idx2 = [x + y for x, y in zip(lineVector, lineNormalVector)].index(0)  # along which we find coordinate
+
+    minValue = np.unique(abs(points[:, pos_idx])).min()
+    boolDict = (points[:, pos_idx] == minValue) & (points[:, pos_idx2] >= 0)
+
+    idx = [i for i, val in enumerate(boolDict) if val]  # index of points
+
+    coord = points[boolDict][:, pos_idx2]
+
+    return boolDict, coord
+
+
+# def plt_MeanvsRadial(data_matrix, mesh: list = None, lineVector: list = [0, 1, 0],
+#                      lineNormalVector: list = [1, 0, 0], save: bool = False, figname: str = None,
+#                      figpath: str = None) -> None:
+#     points = mesh.points
+#     pos_idx = lineVector.index(1)  # along which we define the line
+#     pos_idx2 = [x + y for x, y in zip(lineVector, lineNormalVector)].index(0)  # along which we find long coordinate
+#     minValue = np.unique(abs(points[:, pos_idx])).min()
+#     boolDict = (points[:, pos_idx] == minValue) & (points[:, pos_idx2] >= 0)
+#
+#     y_ = data_matrix[boolDict].mean(axis=1)  # to take the mean of each row
+#     x_ = points[boolDict][:, pos_idx2]
+#
+#     fig, ax = _set_plot_settings()
+#     im = ax.plot(x_ / 0.01, y_, ls="--")
+#     xlabel, ylabel = _set_label(cbar=False)
+#
+#     ax.set_xlabel(xlabel=xlabel, fontsize=16)
+#     ax.set_ylabel(ylabel=ylabel, fontsize=16)
+#
+#     plt.tight_layout()
+#
+#     _save_fig(save, figname, figpath)
+#
+#     plt.close(fig)
+
+def plt_MeanvsRadial(data_matrix, coord: np.array = None, boolDict: dict = [],
+                     save: bool = False, figname: str = None,
+                     figpath: str = None) -> None:
+    y_ = data_matrix[boolDict].mean(axis=1) # to take the mean of each row
+    x_ = coord
+
+    fig, ax = _set_plot_settings()
+    im = ax.plot(x_/0.01, y_, ls="--")
+    xlabel, ylabel = _set_label(cbar=False)
+
+    ax.set_xlabel(xlabel=xlabel, fontsize=16)
+    ax.set_ylabel(ylabel=ylabel, fontsize=16)
+
+    plt.tight_layout()
+
+    _save_fig(save, figname, figpath)
+
+    plt.close(fig)
 def _set_plot_settings(nrows: int = 1, ncols: int = 1) -> Tuple[plt.Figure, plt.Subplot]:
     fig, ax = plt.subplots(nrows, ncols, figsize=[7.2, 4])
     # plt.gca().set_aspect('equal', 'datalim')
@@ -154,15 +214,18 @@ def _set_plot_settings(nrows: int = 1, ncols: int = 1) -> Tuple[plt.Figure, plt.
     return fig, ax
 
 
-def _save_fig(save: bool = False, figname: str = None, figpath: str = None):
+def _save_fig(save: bool = False, figname: str = None, figpath: str = None) -> None:
     if save:
         plt.savefig(figpath + figname + '.png')
     else:
         plt.show()
 
 
-def _set_label():
+def _set_label(cbar: bool = False) -> None:
     xlabel = str(input("Input string for the xlabel (Enter to Confirm):"))
     ylabel = str(input("Input string for the ylabel (Enter to Confirm):"))
-    cbarlabel = str(input("Input string for the cbarlabel (Enter to Confirm):"))
-    return xlabel, ylabel, cbarlabel
+    if cbar:
+        cbarlabel = str(input("Input string for the cbarlabel (Enter to Confirm):"))
+        return xlabel, ylabel, cbarlabel
+    else:
+        return xlabel, ylabel
