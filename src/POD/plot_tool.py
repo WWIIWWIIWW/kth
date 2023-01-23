@@ -127,7 +127,6 @@ def plt_spatiotemporal(data_matrix, snapshot_time: np.array = None,
                        figpath: str = None) -> None:
     x_, y_ = np.meshgrid(snapshot_time, coord)
 
-    print(x_.shape, y_.shape, data_matrix[boolDict].shape)
     fig, ax = _set_plot_settings()
     im = ax.contourf(y_, x_, data_matrix[boolDict], cmap=cm.jet)
     xlabel, ylabel, cbarlabel = _set_label(cbar=True)
@@ -161,32 +160,6 @@ def get_rcs(mesh: list = None, lineVector: list = [0, 1, 0],
     coord = points[boolDict][:, pos_idx2]
 
     return boolDict, coord
-
-
-# def plt_MeanvsRadial(data_matrix, mesh: list = None, lineVector: list = [0, 1, 0],
-#                      lineNormalVector: list = [1, 0, 0], save: bool = False, figname: str = None,
-#                      figpath: str = None) -> None:
-#     points = mesh.points
-#     pos_idx = lineVector.index(1)  # along which we define the line
-#     pos_idx2 = [x + y for x, y in zip(lineVector, lineNormalVector)].index(0)  # along which we find long coordinate
-#     minValue = np.unique(abs(points[:, pos_idx])).min()
-#     boolDict = (points[:, pos_idx] == minValue) & (points[:, pos_idx2] >= 0)
-#
-#     y_ = data_matrix[boolDict].mean(axis=1)  # to take the mean of each row
-#     x_ = points[boolDict][:, pos_idx2]
-#
-#     fig, ax = _set_plot_settings()
-#     im = ax.plot(x_ / 0.01, y_, ls="--")
-#     xlabel, ylabel = _set_label(cbar=False)
-#
-#     ax.set_xlabel(xlabel=xlabel, fontsize=16)
-#     ax.set_ylabel(ylabel=ylabel, fontsize=16)
-#
-#     plt.tight_layout()
-#
-#     _save_fig(save, figname, figpath)
-#
-#     plt.close(fig)
 
 def plt_MeanvsRadial(data_matrix, coord: np.array = None, boolDict: dict = [],
                      save: bool = False, figname: str = None,

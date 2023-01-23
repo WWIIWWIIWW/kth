@@ -4,9 +4,9 @@ import glob
 import pandas as pd
 import pyvista as pv
 
-
 # from algorithm import *
 import time as clock
+
 # from numpy import linalg as la
 
 
@@ -419,6 +419,17 @@ def export_reconstructed_mode_vtk(dimensions, reconstructed_mode_matrix, mesh, n
                     mesh.save(path)
 
 
+def compute_time_average(data_matrix, boolDict: dict = [], save: bool = True, savename: str = "", savepath: str = ''):
+    """
+    Compute mean value of the data_matrix, i.e., on every cell, value is time averaged.
+    """
+    y_ = data_matrix[boolDict].mean(axis=1)
+    if save:
+        np.savetxt(savepath + savename + '.txt', y_)
+    else:
+        return y_
+
+
 def export_mode_vtk(mode, mesh, var_name: str = '', savename: str = "", savepath: str = ''):
     """
     Export vtk contaning appended l_modes where l_modes < l_snapshots
@@ -445,6 +456,3 @@ def export_mode_vtk(mode, mesh, var_name: str = '', savename: str = "", savepath
 
         mesh.save(path)
         print("{} {} written to {}.\n".format(savename, idx_snapshots, path))
-
-
-
