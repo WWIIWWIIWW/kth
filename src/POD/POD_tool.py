@@ -423,6 +423,11 @@ def compute_time_average(data_matrix, boolDict: dict = [], save: bool = True, sa
     """
     Compute mean value of the data_matrix, i.e., on every cell, value is time averaged.
     """
+    bool_length = len(boolDict)
+    print ('bool_length', bool_length)
+    if  bool_length < data_matrix.shape[0]:
+        component = int(input('Type 1, 2, 3 to choose xyz component of vector to average (Enter to Confirm):'))
+        data_matrix = data_matrix[((component-1) * bool_length): (component * bool_length)]
     y_ = data_matrix[boolDict].mean(axis=1)
     if save:
         np.savetxt(savepath + savename + '.txt', y_)
