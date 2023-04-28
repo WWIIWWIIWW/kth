@@ -48,7 +48,7 @@ def import_vtk_data(path: str = '') -> pd.DataFrame:
         for var_name in mesh.array_names:
             if mesh.get_array(var_name).ndim == 2:
                 vector_names.append(var_name)
-                
+
     # Make a dataframe from only scalar mesh arrays (i.e. exclude vectors)
     var_names = [name for name in mesh.array_names if name not in vector_names]
     var_arrays = np.transpose([mesh.get_array(var_name) for var_name in var_names])
@@ -65,8 +65,11 @@ def import_vtk_data(path: str = '') -> pd.DataFrame:
             # Get dimension (number of columns) of typical vector
             dim = mesh.get_array(vector_name).shape[1]
             # split data using dim insteady of hard coding
-            df[[vector_name + ':' + str(i) for i in range(dim)]] = mesh.get_array(vector_name)
+            new_name = [vector_name + ':' + str(i) for i in range(dim)]
+            for idx, name in enumerate(new_name):
 
+                #df[[vector_name + ':' + str(i) for i in range(dim)]] = mesh.get_array(vector_name)
+                df[name] = mesh.get_array(vector_name)[:,idx]
     return df, mesh
 
 def export_vtk_data(mesh: Type, path: str = '', cluster_labels: np.ndarray = None):
