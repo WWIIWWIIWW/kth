@@ -185,11 +185,11 @@ def plt_PDF(data_matrix, location: list = [],
 
     fig, ax = _get_plot_settings()
     data = data_matrix[boolDict]  # row = Nu at coord, column = snapshot
-
+    data_max = np.amax(data)
     color = ['black', 'red', 'cyan', 'green', 'orange', 'purple']
     for idx, value in enumerate(location):
         row_idx = find_nearest(coord, float(value))
-        ax.hist(data[row_idx], bins=50, density=True, rwidth=0.5, color=color[idx], label = 'median = {:.2f}, std = {:.2f}'.format(int(np.median(data[row_idx])), np.std(data[row_idx])))
+        ax.hist(data[row_idx]/data_max, bins=50, density=True, rwidth=0.5, color=color[idx], label = 'median = {:.2f}, std = {:.3f}'.format(float(np.median(data[row_idx])/data_max), np.std(data[row_idx]/data_max)))
     ax.set_xlim(xlim)
     ax.legend()
     plt.tight_layout()
@@ -210,15 +210,15 @@ def plt_PDF_negSS(data_matrix,
         data_matrix = data_matrix[start:end, :]
 
     fig, ax = _get_plot_settings()
-    arr_2d = data_matrix[boolDict]  # row = Nu at coord, column = snapshot
+    arr_2d = data_matrix[boolDict]  # row = SS at coord, column = snapshot
 
     # Value to compare to
     compare_val = 0
 
     # Get density of values smaller than compare_val along each row
-    density = np.sum(arr_2d <= compare_val, axis=1) / arr_2d.shape[1]
-
-    im = ax.plot(coord, density, ls="--")
+    density = np.sum(arr_2d < compare_val, axis=1) / arr_2d.shape[1]
+    np.savetxt(figname + ".txt", density)
+    im = ax.plot(coord, density, ls="-")
 
     xlabel, ylabel = _get_label(cbar=False)
     xim, ylim = _get_limit()
@@ -226,7 +226,7 @@ def plt_PDF_negSS(data_matrix,
     ax.set_xlabel(xlabel=xlabel, fontsize=16)
     ax.set_ylabel(ylabel=ylabel, fontsize=16)
     ax.set_xlim(xim)
-    #ax.set_ylim(ylim)
+    ax.set_ylim(ylim)
 
     plt.tight_layout()
 
