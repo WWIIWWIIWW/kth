@@ -202,7 +202,10 @@ def plt_PDF_negSS(data_matrix,
                  coord: np.array = None, boolDict: dict = [],
                  save: bool = False, figname: str = None,
                  figpath: str = None) -> None:
-
+    """
+    plot probability of negative wall shear stress along radial direction (probability collected over time)
+    """
+    #this may be useless now since we choose data from get_data_matrix by specifying case_as_scalar = True
     if data_matrix.shape[0] > len(boolDict):
         component = int(input('Type 1, 2, 3 to choose xyz component of vector (Enter to Confirm):'))
         start = (component - 1) * len(boolDict)

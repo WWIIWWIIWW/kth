@@ -212,7 +212,6 @@ def get_data_matrix(dimensions: np.ndarray = None, snapshots_dir: str = '', snap
         new_path = update_path(path, var_name)
 
         df, mesh = import_vtk_data(path=new_path, var_name=var_name, col=col)
-        print (df)
         matrix[:, idx_snapshots] = np.reshape(df.to_numpy(), -1, order='F')  # np.hstack(df.to_numpy().T)
 
     print('Data matrix obtained in %.6f s.\n' % (clock.time() - start_time))
