@@ -103,7 +103,6 @@ def import_vtk_data(path: str = '', var_name: str = '', col: str = None) -> pd.D
         df = pd.DataFrame(var_array, columns=[var_name])
     else:
         if col is not None:
-            print (var_array[:,int(col)])
             df = pd.DataFrame(var_array[:,int(col)-1], columns=[var_name + ':' + str(int(col)-1)])
         else:
             # Get dimension (number of columns) of typical vector
