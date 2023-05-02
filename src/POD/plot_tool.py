@@ -219,7 +219,7 @@ def plt_PDF_negSS(data_matrix,
     compare_val = 0
 
     # Get density of values smaller than compare_val along each row
-    density = np.sum(arr_2d < compare_val, axis=1) / arr_2d.shape[1]
+    density = np.sum(arr_2d <= compare_val, axis=1) / arr_2d.shape[1]
     np.savetxt(figname + ".txt", density)
     im = ax.plot(coord, density, ls="-")
 
