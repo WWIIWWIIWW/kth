@@ -82,7 +82,7 @@ def get_dimension_mesh(snapshots_dir: str = '', snapshot_time: np.ndarray = None
     return (np.array([m_samples, n_features, l_snapshots]), mesh)
 
 
-def import_vtk_data(path: str = '', var_name: str = '') -> pd.DataFrame:
+def import_vtk_data(path: str = '', var_name: str = '', col: str = None) -> pd.DataFrame:
     """
     Creates a pandas dataframe [samples, nfeatures] from path.
     Also returns mesh pyvista object.
@@ -102,12 +102,16 @@ def import_vtk_data(path: str = '', var_name: str = '') -> pd.DataFrame:
     if data_dim == 1:
         df = pd.DataFrame(var_array, columns=[var_name])
     else:
-        # Get dimension (number of columns) of typical vector
-        dim = var_array.shape[1]
-        # split data using dim insteady of hard coding
-        df = pd.DataFrame(var_array, columns=[var_name + ':' + str(i) for i in range(dim)])
-        # df = pd.DataFrame()
-        # df[[var_name + ':' + str(i) for i in range(dim)]] = var_array
+        if col is not None:
+            print (var_array[:,int(col)])
+            df = pd.DataFrame(var_array[:,int(col)-1], columns=[var_name + ':' + str(int(col)-1)])
+        else:
+            # Get dimension (number of columns) of typical vector
+            dim = var_array.shape[1]
+            # split data using dim instead of hard coding
+            df = pd.DataFrame(var_array, columns=[var_name + ':' + str(i) for i in range(dim)])
+            # df = pd.DataFrame()
+            # df[[var_name + ':' + str(i) for i in range(dim)]] = var_array
 
     return df, mesh
 
@@ -177,7 +181,8 @@ def get_corre_matrix(data_matrix, var_name: str = '', savepath: str = '', savena
 
 
 def get_data_matrix(dimensions: np.ndarray = None, snapshots_dir: str = '', snapshot_time: np.ndarray = None,
-                    var_name: str = '', savepath: str = '', savename: str = "data_matrix", save: bool = False):
+                    var_name: str = '', cast_as_scalar: bool = False,
+                    savepath: str = '', savename: str = "data_matrix", save: bool = False):
     """
     Get data matrix from all snapshots, accumulate snapshots as column.
     Single snapshot shape [msamples, nfeatures] converted to [nfeatures*msamples, 1]
@@ -193,15 +198,21 @@ def get_data_matrix(dimensions: np.ndarray = None, snapshots_dir: str = '', snap
     print("Getting data matrix....")
 
     start_time = clock.time()
-    # Initialize the matrix
 
+    # If we choose 1 feature from a vector, cast vector as scalar
+    if cast_as_scalar:
+        n_features = 1
+        col = input('Type 1, 2, 3 to choose xyz component of vector (Enter to Confirm):')
+
+    # Initialize the matrix
     matrix = np.zeros([m_samples * n_features, l_snapshots], dtype=np.float64);
     for idx_snapshots, time in enumerate(snapshot_time):
         print("Added snapshot = {}s to the data_matrix.".format(time))
         path = snapshots_dir + str(time) + "/"
         new_path = update_path(path, var_name)
 
-        df, mesh = import_vtk_data(path=new_path, var_name=var_name)
+        df, mesh = import_vtk_data(path=new_path, var_name=var_name, col=col)
+        print (df)
         matrix[:, idx_snapshots] = np.reshape(df.to_numpy(), -1, order='F')  # np.hstack(df.to_numpy().T)
 
     print('Data matrix obtained in %.6f s.\n' % (clock.time() - start_time))
