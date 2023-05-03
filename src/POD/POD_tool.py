@@ -103,7 +103,7 @@ def import_vtk_data(path: str = '', var_name: str = '', col: str = None) -> pd.D
         df = pd.DataFrame(var_array, columns=[var_name])
     else:
         if col is not None:
-            df = pd.DataFrame(var_array[:,int(col)-1], columns=[var_name + ':' + str(int(col)-1)])
+            df = pd.DataFrame(var_array[:, int(col) - 1], columns=[var_name + ':' + str(int(col) - 1)])
         else:
             # Get dimension (number of columns) of typical vector
             dim = var_array.shape[1]
@@ -120,11 +120,16 @@ def transform_2D_matrix_to_3D(POD_mode_matrix, dimensions, l_modes):
     Reshape mode_matrix = np.zeros([m_samples*n_features, l_modes], dtype = np.float64)
     to mode_matrix_3D = np.zeros([m_samples, n_features, l_modes], dtype=np.float64)
     """
-    n_features = dimensions[1]
-    m_samples = dimensions[0]
+    if len(POD_mode_matrix) != dimensions[0] * dimensions[1]:
+        print("Inconsistent m_smaples from 'POD_mode_matrix' and from 'dimensions'!")
+        print("Warning: You might be doing EPOD.. \n The dimensions must be obtained from 2nd process (time_coeff "
+              "and eig_value are from 1st process)!")
+        exit()
+    n_features = dimensions[1]  # n_features
+    m_samples = dimensions[0]  # m_samples
 
     # note: POD_mode_matrix = np.zeros([m_samples*n_features, l_modes], dtype = np.float64)
-    # note for POD modes, we choose to operate on only l_modes if l_modes is a digit, otheriwse l_modes = l_snapshots
+    # note for POD modes, we choose to operate on only l_modes if l_modes is a digit, otherwise l_modes = l_snapshots
     if l_modes in ('All', 'all'):
         # POD_mode_matrix transformed to 3-dimensional matrix initialized with 0.
         POD_mode_matrix_3D = np.zeros([m_samples, n_features, l_snapshots], dtype=np.float64)
@@ -202,6 +207,8 @@ def get_data_matrix(dimensions: np.ndarray = None, snapshots_dir: str = '', snap
     if cast_as_scalar:
         n_features = 1
         col = input('Type 1, 2, 3 to choose xyz component of vector (Enter to Confirm):')
+    else:
+        col = None
 
     # Initialize the matrix
     matrix = np.zeros([m_samples * n_features, l_snapshots], dtype=np.float64);
@@ -327,6 +334,20 @@ def compute_modes(dimensions, eig_value, eig_vector, data_matrix, l_modes='0', s
     return time_coeff, POD_mode_matrix
 
 
+def compute_modes_EPOD(eig_value, time_coeff, data_matrix, savepath: str = '', save: bool = False):
+    """
+    Post-processing to compute EPOD_modes of shape [m_samples, n_features, l_modes]
+    """
+    l_modes = time_coeff.shape[0]
+    EPOD_mode_matrix = np.dot(data_matrix, np.transpose(time_coeff)) / eig_value[0:l_modes]
+    if save:
+        np.savetxt(savepath + "EPOD_{}mode_matrix.txt".format(l_modes), EPOD_mode_matrix)
+
+    print("Saved time EPOD mode matrix for {} modes.\n".format(l_modes))
+
+    return EPOD_mode_matrix
+
+
 def reconstruct_modes(dimensions, time_coeff, POD_mode_matrix, n_snapshots_to_reconstruct=1, n_modes_to_reconstruct=0,
                       var_name: str = '', savepath: str = ''):
     """
@@ -433,10 +454,10 @@ def compute_time_average(data_matrix, boolDict: dict = [], save: bool = True, sa
     Compute mean value of the data_matrix, i.e., on every cell, value is time averaged.
     """
     bool_length = len(boolDict)
-    print ('bool_length', bool_length)
-    if  bool_length < data_matrix.shape[0]:
+    print('bool_length', bool_length)
+    if bool_length < data_matrix.shape[0]:
         component = int(input('Type 1, 2, 3 to choose xyz component of vector to average (Enter to Confirm):'))
-        data_matrix = data_matrix[((component-1) * bool_length): (component * bool_length)]
+        data_matrix = data_matrix[((component - 1) * bool_length): (component * bool_length)]
     y_ = data_matrix[boolDict].mean(axis=1)
     if save:
         np.savetxt(savepath + savename + '.txt', y_)
