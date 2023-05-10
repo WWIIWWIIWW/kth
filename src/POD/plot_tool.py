@@ -1,3 +1,4 @@
+import matplotlib
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import lines
@@ -182,14 +183,15 @@ def plt_PDF(data_matrix, location: list = [],
             coord: np.array = None, boolDict: dict = [],
             save: bool = False, figname: str = None,
             figpath: str = None) -> None:
-
     fig, ax = _get_plot_settings()
     data = data_matrix[boolDict]  # row = Nu at coord, column = snapshot
     data_max = np.amax(data)
     color = ['black', 'red', 'cyan', 'green', 'orange', 'purple']
     for idx, value in enumerate(location):
         row_idx = find_nearest(coord, float(value))
-        ax.hist(data[row_idx]/data_max, bins=50, density=True, rwidth=0.5, color=color[idx], label = 'median = {:.2f}, std = {:.3f}'.format(float(np.median(data[row_idx])/data_max), np.std(data[row_idx]/data_max)))
+        ax.hist(data[row_idx] / data_max, bins=50, density=True, rwidth=0.5, color=color[idx],
+                label='median = {:.2f}, std = {:.3f}'.format(float(np.median(data[row_idx]) / data_max),
+                                                             np.std(data[row_idx] / data_max)))
     ax.set_xlim(xlim)
     ax.legend()
     plt.tight_layout()
@@ -198,14 +200,15 @@ def plt_PDF(data_matrix, location: list = [],
 
     plt.close(fig)
 
+
 def plt_PDF_negSS(data_matrix,
-                 coord: np.array = None, boolDict: dict = [],
-                 save: bool = False, figname: str = None,
-                 figpath: str = None) -> None:
+                  coord: np.array = None, boolDict: dict = [],
+                  save: bool = False, figname: str = None,
+                  figpath: str = None) -> None:
     """
     plot probability of negative wall shear stress along radial direction (probability collected over time)
     """
-    #this may be useless now since we choose data from get_data_matrix by specifying case_as_scalar = True
+    # this may be useless now since we choose data from get_data_matrix by specifying case_as_scalar = True
     if data_matrix.shape[0] > len(boolDict):
         component = int(input('Type 1, 2, 3 to choose xyz component of vector (Enter to Confirm):'))
         start = (component - 1) * len(boolDict)
@@ -237,19 +240,108 @@ def plt_PDF_negSS(data_matrix,
 
     plt.close(fig)
 
-def plt_JPDF(data_matrix, snapshot_time: np.array = None,
+
+def plt_JPDF(data_matrix,
              coord: np.array = None, boolDict: dict = [],
              save: bool = False, figname: str = None,
              figpath: str = None) -> None:
-    fig, ax = plt.subplots(nrows=1, ncols=1, figsize=[7.2, 7.2])
-    data = data_matrix[boolDict]  # row = Nu at coord, column = snapshot
-    idx = find_nearest(coord, 0.005)
-    idx_2 = find_nearest(coord, 0.01)
+    data = data_matrix[boolDict]
+    tot = data.shape[1] * data.shape[0]
+    array_min = np.amin(data)
+    array_max = np.amax(data)
+    grids = np.linspace(array_min, array_max, 201)  ##10000points
+    row_list = []
 
-    ax.hist(data[idx], bins=50, density=True, rwidth=0.5, color='skyblue')
-    ax.hist(data[idx_2], bins=50, density=True, rwidth=0.5, color='black')
-    ax.legend()
-    plt.show()
+    for idx_row in np.arange(len(data)):
+        row_data = data[idx_row, :]
+        col_list = []
+        for i in range(len(grids) - 1):
+            density = np.sum(np.logical_and(row_data > grids[i], row_data <= grids[i + 1])) / float(tot)
+            col_list.append(density)
+        row_list.append(col_list)
+    z_data = np.array(row_list)
+
+    fig, ax = _get_plot_settings()
+
+    # meshgrid coordinates
+    X, Y = np.meshgrid(coord, grids[:-1])
+    xim, ylim = _get_limit()  # or xim, ylim, clim = _get_limit(cmap=True)
+    # plot the 3d surface
+    # ax = fig.add_subplot(111, projection='3d')
+    # ax.plot_surface(X, Y, z_data.T,cmap=cm.coolwarm,
+    #                  linewidth=0, antialiased=True)
+    # set labels for the axes
+    # ax.set_xlabel('X Label')
+    # ax.set_ylabel('Y Label')
+    # ax.set_zlabel('Z Label')
+
+    # Create a saturated colormap with the "rocket" palette
+    # c = ax.pcolormesh(X, Y, z_data.T, cmap='magma', vmin=clim[0], vmax=clim[1])
+    #im = ax.pcolormesh(X, Y, z_data.T, cmap='turbo', norm=matplotlib.colors.LogNorm(vmin=1e-06, vmax=1e-02),
+    #                   shading='auto')  # turbo
+    im = ax.pcolormesh(X, Y, z_data.T, cmap='hot', norm=matplotlib.colors.LogNorm(vmin=1e-05, vmax=1e-03),
+                       shading='auto')  # turbo
+    ax.set_xlabel('X')
+    ax.set_ylabel('Y')
+    ax.set_title('2D Surface with Z values represented by colors')
+    ax.set_xlim(xim)
+    ax.set_ylim(ylim)
+    # Add colorbar with logarithmic ticks
+    cbar = fig.colorbar(im, ax=ax)
+    #cbar.set_ticks([1e-6, 1e-5, 1e-4, 1e-3, 1e-2])
+    #cbar.set_ticklabels(['1e-6', '1e-5', '1e-4', '1e-3', '1e-2'])
+    cbar.set_ticks([1e-5, 1e-4, 1e-3])
+    cbar.set_ticklabels(['1e-5', '1e-4', '1e-3'])
+    cbar.ax.set_ylabel('Probability Density')
+
+    plt.tight_layout()
+
+    _save_fig(save, figname, figpath)
+
+    plt.close(fig)
+
+
+def plt_JPDF2(data_matrix1,
+              data_matrix2,
+              coord: np.array = None, boolDict: dict = [],
+              save: bool = False, figname: str = None,
+              figpath: str = None) -> None:
+    print("Calculating JPDF.")
+
+    data1 = data_matrix1[boolDict]  # row: radial coord, column: time
+    data2 = data_matrix2[boolDict]
+    Rmin = float(input("Input Min. rad. coord.  for your plot (Enter to Confirm):"))
+    Rmax = float(input("Input Max. rad. coord. for your plot (Enter to Confirm):"))
+    new_boolDict = (coord > Rmin) & (coord < Rmax)
+
+    fig, ax = _get_plot_settings()
+
+    x = np.ravel(data2[new_boolDict])
+    y = np.ravel(data1[new_boolDict])
+
+    # Create a joint plot using Seaborn
+    # sns.jointplot(x=x["wallShearStress:1"], y=y["myWallNu"], kind='hist')
+    # plt.show()
+
+    H, xedges, yedges = np.histogram2d(x=x, y=y, bins=300, density=True)
+    # Plot the histogram as a heatmap
+    X, Y = np.meshgrid(xedges, yedges)
+    im = ax.pcolormesh(X, Y, H + 0.001, cmap='turbo', norm=matplotlib.colors.LogNorm())
+    ax.set_xlabel('X')
+    ax.set_ylabel('Y')
+    ax.set_title('2D Surface with Z values represented by colors')
+    # ax.set_xlim([-0.1, 0.4])
+    # Add colorbar with logarithmic ticks
+    cbar = fig.colorbar(im, ax=ax)
+    # cbar.set_ticks([1e-4, 1e-3, 1e-2, 1e-1, 0])
+    # cbar.set_ticklabels(['1e-4', '1e-3', '1e-2', '1e-1', '0'])
+    cbar.ax.set_ylabel('Probability Density')
+
+    plt.tight_layout()
+
+    _save_fig(save, figname, figpath)
+
+    plt.close(fig)
 
 
 def get_rcs(mesh: list = None, lineVector: list = [0, 1, 0],
@@ -351,12 +443,17 @@ def _get_label(cbar: bool = False) -> None:
         return xlabel, ylabel
 
 
-def _get_limit() -> None:
+def _get_limit(cmap: bool = False) -> None:
     xmin = float(input("Input Min. X for your plot (Enter to Confirm):"))
     xmax = float(input("Input Max. X for your plot (Enter to Confirm):"))
     ymin = float(input("Input Min. Y for your plot (Enter to Confirm):"))
     ymax = float(input("Input Max. Y for your plot (Enter to Confirm):"))
-
     xlim = [xmin, xmax]
     ylim = [ymin, ymax]
-    return xlim, ylim
+    if cmap:
+        cmin = float(input("Input Min. cmap for your plot (Enter to Confirm):"))
+        cmax = float(input("Input Max. cmap for your plot (Enter to Confirm):"))
+        clim = [cmin, cmax]
+        return xlim, ylim, clim
+    else:
+        return xlim, ylim
