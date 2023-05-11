@@ -179,21 +179,31 @@ def plt_spatiotemporal(data_matrix, snapshot_time: np.array = None,
 
 
 def plt_PDF(data_matrix, location: list = [],
-            xlim: list = [],
             coord: np.array = None, boolDict: dict = [],
             save: bool = False, figname: str = None,
             figpath: str = None) -> None:
+
     fig, ax = _get_plot_settings()
+
     data = data_matrix[boolDict]  # row = Nu at coord, column = snapshot
+
     data_max = np.amax(data)
+
     color = ['black', 'red', 'cyan', 'green', 'orange', 'purple']
     for idx, value in enumerate(location):
         row_idx = find_nearest(coord, float(value))
-        ax.hist(data[row_idx] / data_max, bins=50, density=True, rwidth=0.5, color=color[idx],
-                label='median = {:.2f}, std = {:.3f}'.format(float(np.median(data[row_idx]) / data_max),
-                                                             np.std(data[row_idx] / data_max)))
-    ax.set_xlim(xlim)
-    ax.legend()
+        # ax.hist(data[row_idx] / data_max, bins=50, density=True, rwidth=0.5, color=color[idx],
+        #         label='median = {:.2f}, std = {:.3f}'.format(float(np.median(data[row_idx]) / data_max),
+        #                                                      np.std(data[row_idx] / data_max)))
+        ax.hist(data[row_idx], bins=51, density=True, rwidth=0.5, color=color[idx],
+                label='median = {:.2f}, std = {:.3f}'.format(float(np.median(data[row_idx])),
+                                                             np.std(data[row_idx])))
+    xim, ylim = _get_limit()
+
+    ax.set_xlim(xim)
+    ax.set_ylim(ylim)
+    #ax.set_yscale("log")
+    #ax.legend()
     plt.tight_layout()
 
     _save_fig(save, figname, figpath)
@@ -323,18 +333,23 @@ def plt_JPDF2(data_matrix1,
     # sns.jointplot(x=x["wallShearStress:1"], y=y["myWallNu"], kind='hist')
     # plt.show()
 
-    H, xedges, yedges = np.histogram2d(x=x, y=y, bins=300, density=True)
+    H, xedges, yedges = np.histogram2d(x=x, y=y, bins=201, density=True)
     # Plot the histogram as a heatmap
     X, Y = np.meshgrid(xedges, yedges)
-    im = ax.pcolormesh(X, Y, H + 0.001, cmap='turbo', norm=matplotlib.colors.LogNorm())
+
+    xim, ylim = _get_limit()  # or xim, ylim, clim = _get_limit(cmap=True)
+
+    im = ax.pcolormesh(X, Y, H, cmap='turbo', norm=matplotlib.colors.LogNorm(vmin=1e-04, vmax=1),
+                       shading='auto')  # turbo
     ax.set_xlabel('X')
     ax.set_ylabel('Y')
     ax.set_title('2D Surface with Z values represented by colors')
-    # ax.set_xlim([-0.1, 0.4])
+    ax.set_xlim(xim)
+    ax.set_ylim(ylim)
     # Add colorbar with logarithmic ticks
     cbar = fig.colorbar(im, ax=ax)
-    # cbar.set_ticks([1e-4, 1e-3, 1e-2, 1e-1, 0])
-    # cbar.set_ticklabels(['1e-4', '1e-3', '1e-2', '1e-1', '0'])
+    cbar.set_ticks([1e-4, 1e-3, 1e-2, 1e-1, 1])
+    cbar.set_ticklabels(['1e-4', '1e-3', '1e-2', '1e-1', '1e0'])
     cbar.ax.set_ylabel('Probability Density')
 
     plt.tight_layout()
