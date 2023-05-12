@@ -182,7 +182,6 @@ def plt_PDF(data_matrix, location: list = [],
             coord: np.array = None, boolDict: dict = [],
             save: bool = False, figname: str = None,
             figpath: str = None) -> None:
-
     fig, ax = _get_plot_settings()
 
     data = data_matrix[boolDict]  # row = Nu at coord, column = snapshot
@@ -202,8 +201,8 @@ def plt_PDF(data_matrix, location: list = [],
 
     ax.set_xlim(xim)
     ax.set_ylim(ylim)
-    #ax.set_yscale("log")
-    #ax.legend()
+    # ax.set_yscale("log")
+    # ax.legend()
     plt.tight_layout()
 
     _save_fig(save, figname, figpath)
@@ -233,7 +232,40 @@ def plt_PDF_negSS(data_matrix,
 
     # Get density of values smaller than compare_val along each row
     density = np.sum(arr_2d <= compare_val, axis=1) / arr_2d.shape[1]
-    np.savetxt(figname + ".txt", density)
+
+    im = ax.plot(coord, density, ls="-")
+
+    xlabel, ylabel = _get_label(cbar=False)
+    xim, ylim = _get_limit()
+
+    ax.set_xlabel(xlabel=xlabel, fontsize=16)
+    ax.set_ylabel(ylabel=ylabel, fontsize=16)
+    ax.set_xlim(xim)
+    ax.set_ylim(ylim)
+
+    plt.tight_layout()
+
+    _save_fig(save, figname, figpath)
+
+    plt.close(fig)
+
+
+def plt_PDF_Nu(data_matrix,
+               coord: np.array = None, boolDict: dict = [],
+               save: bool = False, figname: str = None,
+               figpath: str = None) -> None:
+    """
+    plot probability of Nu larger than value (probability collected over time)
+    """
+    fig, ax = _get_plot_settings()
+    arr_2d = data_matrix[boolDict]  # row = SS at coord, column = snapshot
+
+    # Value to compare to
+    compare_val = float(input('Type min Nusselt number, we plot density for dataset values larger than it:'))
+
+    # Get density of values smaller than compare_val along each row
+    density = np.sum(arr_2d >= compare_val, axis=1) / arr_2d.shape[1]
+
     im = ax.plot(coord, density, ls="-")
 
     xlabel, ylabel = _get_label(cbar=False)
@@ -287,7 +319,7 @@ def plt_JPDF(data_matrix,
 
     # Create a saturated colormap with the "rocket" palette
     # c = ax.pcolormesh(X, Y, z_data.T, cmap='magma', vmin=clim[0], vmax=clim[1])
-    #im = ax.pcolormesh(X, Y, z_data.T, cmap='turbo', norm=matplotlib.colors.LogNorm(vmin=1e-06, vmax=1e-02),
+    # im = ax.pcolormesh(X, Y, z_data.T, cmap='turbo', norm=matplotlib.colors.LogNorm(vmin=1e-06, vmax=1e-02),
     #                   shading='auto')  # turbo
     im = ax.pcolormesh(X, Y, z_data.T, cmap='hot', norm=matplotlib.colors.LogNorm(vmin=1e-05, vmax=1e-03),
                        shading='auto')  # turbo
@@ -298,8 +330,8 @@ def plt_JPDF(data_matrix,
     ax.set_ylim(ylim)
     # Add colorbar with logarithmic ticks
     cbar = fig.colorbar(im, ax=ax)
-    #cbar.set_ticks([1e-6, 1e-5, 1e-4, 1e-3, 1e-2])
-    #cbar.set_ticklabels(['1e-6', '1e-5', '1e-4', '1e-3', '1e-2'])
+    # cbar.set_ticks([1e-6, 1e-5, 1e-4, 1e-3, 1e-2])
+    # cbar.set_ticklabels(['1e-6', '1e-5', '1e-4', '1e-3', '1e-2'])
     cbar.set_ticks([1e-5, 1e-4, 1e-3])
     cbar.set_ticklabels(['1e-5', '1e-4', '1e-3'])
     cbar.ax.set_ylabel('Probability Density')
@@ -351,6 +383,42 @@ def plt_JPDF2(data_matrix1,
     cbar.set_ticks([1e-4, 1e-3, 1e-2, 1e-1, 1])
     cbar.set_ticklabels(['1e-4', '1e-3', '1e-2', '1e-1', '1e0'])
     cbar.ax.set_ylabel('Probability Density')
+
+    plt.tight_layout()
+
+    _save_fig(save, figname, figpath)
+
+    plt.close(fig)
+
+
+def plt_JPDF3(data_matrix1,
+              data_matrix2,
+              coord: np.array = None, boolDict: dict = [],
+              save: bool = False, figname: str = None,
+              figpath: str = None) -> None:
+
+    fig, ax = _get_plot_settings()
+
+    data1 = data_matrix1[boolDict]  # Nu
+    data2 = data_matrix2[boolDict]  # SS
+
+    tot = data1.shape[1] * data1.shape[0]
+    # Value to compare to
+    compare_val_Nu = float(input('Type min Nusselt number, we plot density for dataset values larger than it:'))
+    compare_val_SS = float(input('Type max Shear stress, we plot density for dataset values smaller than it:'))
+
+    # Get density of values smaller than compare_val along each row
+    density = np.sum(np.logical_and(data1 >= compare_val_Nu, data2 <= compare_val_SS)) / float(tot)
+
+    im = ax.plot(coord, density, ls="-")
+
+    xlabel, ylabel = _get_label(cbar=False)
+    xim, ylim = _get_limit()
+
+    ax.set_xlabel(xlabel=xlabel, fontsize=16)
+    ax.set_ylabel(ylabel=ylabel, fontsize=16)
+    ax.set_xlim(xim)
+    ax.set_ylim(ylim)
 
     plt.tight_layout()
 
