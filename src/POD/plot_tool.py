@@ -232,7 +232,7 @@ def plt_PDF_negSS(data_matrix,
 
     # Get density of values smaller than compare_val along each row
     density = np.sum(arr_2d <= compare_val, axis=1) / arr_2d.shape[1]
-
+    np.savetxt("PDF_negSS_density", density)
     im = ax.plot(coord, density, ls="-")
 
     xlabel, ylabel = _get_label(cbar=False)
@@ -265,7 +265,7 @@ def plt_PDF_Nu(data_matrix,
 
     # Get density of values smaller than compare_val along each row
     density = np.sum(arr_2d >= compare_val, axis=1) / arr_2d.shape[1]
-
+    np.savetxt("PDF_Nu_density", density)
     im = ax.plot(coord, density, ls="-")
 
     xlabel, ylabel = _get_label(cbar=False)
@@ -408,17 +408,24 @@ def plt_JPDF3(data_matrix1,
     compare_val_SS = float(input('Type max Shear stress, we plot density for dataset values smaller than it:'))
 
     # Get density of values smaller than compare_val along each row
-    density = np.sum(np.logical_and(data1 >= compare_val_Nu, data2 <= compare_val_SS)) / float(tot)
-
+    density = np.sum(np.logical_and(data1 >= compare_val_Nu, data2 <= compare_val_SS), axis=1) / float(tot)
+    np.savetxt("JPDFdensity", density)
+    # Get density of values smaller than compare_val along each row
     im = ax.plot(coord, density, ls="-")
 
     xlabel, ylabel = _get_label(cbar=False)
-    xim, ylim = _get_limit()
+    xlim, ylim = _get_limit()
 
     ax.set_xlabel(xlabel=xlabel, fontsize=16)
     ax.set_ylabel(ylabel=ylabel, fontsize=16)
-    ax.set_xlim(xim)
+
+    ax.set_yscale("log")
+
+    ax.set_xlim(xlim)
     ax.set_ylim(ylim)
+
+    ax.set_yticks([1e-5, 1e-4, 1e-3, 1e-2])
+    ax.set_yticklabels(['1e-5', '1e-4', '1e-3', '1e-2'])
 
     plt.tight_layout()
 
