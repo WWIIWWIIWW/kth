@@ -18,6 +18,7 @@ from .plot import umap_plot as umap_plot
 from .plot import plot_cluster_scores as plot_cluster_scores
 from .plot import plot_csv_data as plot_csv_data
 from .plot import plot_manifold as plot_manifold
+from .plot import new_set_cluster_member_colors
 
 from .mi import get_cluster_mi_scores as get_cluster_mi_scores
 from .mi import get_cluster_scores as get_cluster_scores

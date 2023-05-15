@@ -1,3 +1,3 @@
-from .process import split_sequence as split_sequence
+from .process import *
 from .plot import plot as plot
 from .plot import show as show
