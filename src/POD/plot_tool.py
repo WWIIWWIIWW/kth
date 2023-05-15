@@ -409,7 +409,7 @@ def plt_JPDF3(data_matrix1,
 
     # Get density of values smaller than compare_val along each row
     density = np.sum(np.logical_and(data1 >= compare_val_Nu, data2 <= compare_val_SS), axis=1) / float(tot)
-    np.savetxt("JPDFdensity", density)
+    np.savetxt(figname+"txt", density)
     # Get density of values smaller than compare_val along each row
     im = ax.plot(coord, density, ls="-")
 

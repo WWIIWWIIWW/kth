@@ -71,6 +71,7 @@ def get_dimension_mesh(snapshots_dir: str = '', snapshot_time: np.ndarray = None
         snapshot_time = [int(x) if x == int(x) else x for x in snapshot_time]
 
     path = snapshots_dir + str(snapshot_time[0]) + "/"  # use str for concatenate directory
+
     new_path = update_path(path, var_name)
 
     df, mesh = import_vtk_data(path=new_path, var_name=var_name)
