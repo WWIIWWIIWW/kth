@@ -546,23 +546,7 @@ def map_vtk2(sourceDir, targetDir, var_name: str = ''):
 
     data_dim = source_mesh.n_arrays
     #array_names = source_mesh.array_names
-    print (data_dim)
-    """
-    data_dim = var_array.ndim
 
-    if data_dim == 1:
-        df = pd.DataFrame(var_array, columns=[var_name])
-    else:
-        if col is not None:
-            df = pd.DataFrame(var_array[:, int(col) - 1], columns=[var_name + ':' + str(int(col) - 1)])
-        else:
-            # Get dimension (number of columns) of typical vector
-            dim = var_array.shape[1]
-            # split data using dim instead of hard coding
-            df = pd.DataFrame(var_array, columns=[var_name + ':' + str(i) for i in range(dim)])
-            # df = pd.DataFrame()
-            # df[[var_name + ':' + str(i) for i in range(dim)]] = var_array
-    """
     if data_dim == 1:
         array_names = var_name
         source_data = source_mesh.get_array(array_names, preference='cell')
