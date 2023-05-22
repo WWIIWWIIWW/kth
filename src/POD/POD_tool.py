@@ -493,6 +493,7 @@ def export_mode_vtk(mode, mesh, var_name: str = '', savename: str = "", savepath
         mesh.save(path)
         print("{} {} written to {}.\n".format(savename, idx_snapshots, path))
 
+
 def map_vtk(sourceDir, targetDir, var_name: str = ''):
     """
     Map data from source vtk - mesh to target vtk - mesh. (vtks contain pointCloud data)
@@ -501,6 +502,8 @@ def map_vtk(sourceDir, targetDir, var_name: str = ''):
     Reason for mapping: source pointCloud cannot be used for surface reconstruction using Delaunay3D in paraview,
     while the target pointCloud which is similar to source works.
     """
+    from scipy.spatial import KDTree
+
     source_mesh = pv.read(sourceDir)
     target_mesh = pv.read(targetDir)
 
@@ -520,5 +523,68 @@ def map_vtk(sourceDir, targetDir, var_name: str = ''):
 
     # Replace target mesh data using mapped_data from the source
     target_mesh[var_name] = mapped_data
-    saveDir = sourceDir[:sourceDir.rfind('.vtk')] # get strings before .vtk
+    saveDir = sourceDir[:sourceDir.rfind('.vtk')]  # get strings before .vtk
     target_mesh.save(saveDir + "_mapped.vtk")
+
+    print("Mapping succeeded!")
+
+def map_vtk2(sourceDir, targetDir, var_name: str = ''):
+    """
+    Map data from source vtk - mesh to target vtk - mesh. (vtks contain pointCloud data)
+    Save mapped data and target vtk - mesh to source directory.
+
+    Reason for mapping: source pointCloud cannot be used for surface reconstruction using Delaunay3D in paraview,
+    while the target pointCloud which is similar to source works.
+    """
+    from scipy.spatial import KDTree
+
+    source_mesh = pv.read(sourceDir)
+    target_mesh = pv.read(targetDir)
+
+    source_points = source_mesh.points
+    target_points = target_mesh.points
+
+    data_dim = source_mesh.n_arrays
+    #array_names = source_mesh.array_names
+    print (data_dim)
+    """
+    data_dim = var_array.ndim
+
+    if data_dim == 1:
+        df = pd.DataFrame(var_array, columns=[var_name])
+    else:
+        if col is not None:
+            df = pd.DataFrame(var_array[:, int(col) - 1], columns=[var_name + ':' + str(int(col) - 1)])
+        else:
+            # Get dimension (number of columns) of typical vector
+            dim = var_array.shape[1]
+            # split data using dim instead of hard coding
+            df = pd.DataFrame(var_array, columns=[var_name + ':' + str(i) for i in range(dim)])
+            # df = pd.DataFrame()
+            # df[[var_name + ':' + str(i) for i in range(dim)]] = var_array
+    """
+    if data_dim == 1:
+        array_names = var_name
+        source_data = source_mesh.get_array(array_names, preference='cell')
+    else:
+        data = []
+        for i in range(data_dim):
+            array_names = var_name + ':' + str(i)
+            data.append(source_mesh.get_array(array_names, preference='cell'))
+        source_data = np.transpose(np.array(data))
+
+    # Build KDTree from source points
+    kdtree = KDTree(source_points)
+
+    # Find nearest neighbors for each point in the target cloud
+    distances, indices = kdtree.query(target_points)
+
+    # Map data from source to target based on nearest neighbors
+    mapped_data = source_data[indices]
+
+    # Replace target mesh data using mapped_data from the source
+    target_mesh[var_name] = mapped_data
+    saveDir = sourceDir[:sourceDir.rfind('.vtk')]  # get strings before .vtk
+    target_mesh.save(saveDir + "_mapped.vtk")
+
+    print("Mapping succeeded!")
