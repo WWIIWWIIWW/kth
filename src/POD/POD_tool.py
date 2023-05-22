@@ -492,3 +492,33 @@ def export_mode_vtk(mode, mesh, var_name: str = '', savename: str = "", savepath
 
         mesh.save(path)
         print("{} {} written to {}.\n".format(savename, idx_snapshots, path))
+
+def map_vtk(sourceDir, targetDir, var_name: str = ''):
+    """
+    Map data from source vtk - mesh to target vtk - mesh. (vtks contain pointCloud data)
+    Save mapped data and target vtk - mesh to source directory.
+
+    Reason for mapping: source pointCloud cannot be used for surface reconstruction using Delaunay3D in paraview,
+    while the target pointCloud which is similar to source works.
+    """
+    source_mesh = pv.read(sourceDir)
+    target_mesh = pv.read(targetDir)
+
+    source_points = source_mesh.points
+    target_points = target_mesh.points
+
+    source_data = source_mesh.get_array(var_name, preference='cell')
+
+    # Build KDTree from source points
+    kdtree = KDTree(source_points)
+
+    # Find nearest neighbors for each point in the target cloud
+    distances, indices = kdtree.query(target_points)
+
+    # Map data from source to target based on nearest neighbors
+    mapped_data = source_data[indices]
+
+    # Replace target mesh data using mapped_data from the source
+    target_mesh[var_name] = mapped_data
+    saveDir = sourceDir[:sourceDir.rfind('.vtk')] # get strings before .vtk
+    target_mesh.save(saveDir + "_mapped.vtk")
