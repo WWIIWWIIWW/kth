@@ -1,4 +1,7 @@
 import os
+import sys
+from typing import Tuple, Any, List
+
 import numpy as np
 import glob
 import pandas as pd
@@ -6,6 +9,8 @@ import pyvista as pv
 
 # from algorithm import *
 import time as clock
+
+from numpy import ndarray
 
 # from numpy import linalg as la
 
@@ -61,9 +66,15 @@ def update_path(path: str = "", var_name: str = ""):
     return (newpath + substring)
 
 
-def get_dimension_mesh(snapshots_dir: str = '', snapshot_time: np.ndarray = None, var_name: str = '') -> np.ndarray:
+def get_dimension_mesh(snapshots_dir: str = '', snapshot_time: np.ndarray = None, var_name: str = '',
+                       slice_plane: List = None) -> tuple[ndarray, Any]:
     """
     Read a single snapshot to get m_samples, n_features, and l_snapshots as array.
+
+    if we want to slice the mesh (3D pointCloud -> 2D plane), add arg: slice_plane = [1, 0.01]
+    where slice_normal_to_axis, slice_value = slice_plane = [1, 0.01]
+    where 1 ix x direction, hence plane is normal to x.
+    0.01 is the position of slicing along x direction.
     """
 
     if isinstance(snapshot_time, np.ndarray):
@@ -74,19 +85,67 @@ def get_dimension_mesh(snapshots_dir: str = '', snapshot_time: np.ndarray = None
 
     new_path = update_path(path, var_name)
 
-    df, mesh = import_vtk_data(path=new_path, var_name=var_name)
+    df, mesh = import_vtk_data(path=new_path, var_name=var_name, slice_plane=slice_plane)
 
     m_samples = df.shape[0]
     n_features = df.shape[1]
     l_snapshots = len(snapshot_time)
 
-    return (np.array([m_samples, n_features, l_snapshots]), mesh)
+    return np.array([m_samples, n_features, l_snapshots]), mesh
 
 
-def import_vtk_data(path: str = '', var_name: str = '', col: str = None) -> pd.DataFrame:
+def check_value_in_array(value, array):
+    #print (array, value)
+    if value not in array:
+        print("Warning: Value not found in array.")
+        sys.exit()
+
+
+def slice(mesh, slice_plane: List = None):
+    """
+    if we want to slice the mesh (3D pointCloud -> 2D plane), add arg: slice_plane = [1, 0.01]
+    where slice_normal_to_axis, slice_value = slice_plane = [1, 0.01]
+    where 1 ix x direction, hence plane is normal to x.
+    0.01 is the position of slicing along x direction.
+    """
+    if slice_plane is None:
+        return mesh  # Return the original mesh if cut_plane is False
+
+    slice_normal_to_axis, slice_value = slice_plane
+    print (slice_normal_to_axis - 1)
+    points = mesh.points
+    # Check if the chosen slice value is available along the chosen direction.
+    check_value_in_array(slice_value, np.unique(points[:, slice_normal_to_axis - 1]))
+
+    boolDict = points[:, slice_normal_to_axis - 1] == float(slice_value)
+
+    # Create the PyVista mesh
+    sliced_mesh = pv.PolyData()
+    sliced_mesh.points = points[boolDict]
+
+    # Apply the mask to each point array
+    point_arrays = mesh.point_data
+    for array_name in point_arrays.keys():
+        array = point_arrays[array_name]
+        masked_array = array[boolDict]
+        sliced_mesh[array_name] = masked_array
+
+    print("3D data sliced successfully!")
+    return sliced_mesh
+
+
+def import_vtk_data(path: str = '', var_name: str = '', col: str = None,
+                    slice_plane: List = None) -> pd.DataFrame:
     """
     Creates a pandas dataframe [samples, nfeatures] from path.
     Also returns mesh pyvista object.
+
+    if col is not None, e.g.: 1, 2, 3 are given, then we choose the 1st, 2nd, or 3rd axis of a vector.
+
+    if we want to slice the mesh (3D pointCloud -> 2D plane), add arg: slice_plane = [1, 0.01]
+    where slice_normal_to_axis, slice_value = slice_plane = [1, 0.01]
+    where 1 ix x direction, hence plane is normal to x.
+    0.01 is the position of slicing along x direction.
     """
 
     if not path:
@@ -96,7 +155,9 @@ def import_vtk_data(path: str = '', var_name: str = '', col: str = None) -> pd.D
 
     mesh = pv.read(path)
 
-    var_array = mesh.get_array(var_name, preference='cell')
+    mesh_to_use = slice(mesh, slice_plane=slice_plane)
+
+    var_array = mesh_to_use.get_array(var_name, preference='cell')
 
     data_dim = var_array.ndim
 
@@ -113,7 +174,7 @@ def import_vtk_data(path: str = '', var_name: str = '', col: str = None) -> pd.D
             # df = pd.DataFrame()
             # df[[var_name + ':' + str(i) for i in range(dim)]] = var_array
 
-    return df, mesh
+    return df, mesh_to_use
 
 
 def transform_2D_matrix_to_3D(POD_mode_matrix, dimensions, l_modes):
@@ -187,10 +248,16 @@ def get_corre_matrix(data_matrix, var_name: str = '', savepath: str = '', savena
 
 def get_data_matrix(dimensions: np.ndarray = None, snapshots_dir: str = '', snapshot_time: np.ndarray = None,
                     var_name: str = '', cast_as_scalar: bool = False,
+                    slice_plane: List = None,
                     savepath: str = '', savename: str = "data_matrix", save: bool = False):
     """
     Get data matrix from all snapshots, accumulate snapshots as column.
     Single snapshot shape [msamples, nfeatures] converted to [nfeatures*msamples, 1]
+
+    if we want to slice the mesh (3D pointCloud -> 2D plane), add arg: slice_plane = [1, 0.01]
+    where slice_normal_to_axis, slice_value = slice_plane = [1, 0.01]
+    where 1 ix x direction, hence plane is normal to x.
+    0.01 is the position of slicing along x direction.
 
     return number of features and the data matrix of shape [nfeatures*msamples, l*snapshots].
     """
@@ -218,7 +285,7 @@ def get_data_matrix(dimensions: np.ndarray = None, snapshots_dir: str = '', snap
         path = snapshots_dir + str(time) + "/"
         new_path = update_path(path, var_name)
 
-        df, mesh = import_vtk_data(path=new_path, var_name=var_name, col=col)
+        df, mesh = import_vtk_data(path=new_path, var_name=var_name, col=col, slice_plane=slice_plane)
         matrix[:, idx_snapshots] = np.reshape(df.to_numpy(), -1, order='F')  # np.hstack(df.to_numpy().T)
 
     print('Data matrix obtained in %.6f s.\n' % (clock.time() - start_time))
@@ -528,6 +595,7 @@ def map_vtk(sourceDir, targetDir, var_name: str = ''):
 
     print("Mapping succeeded!")
 
+
 def map_vtk2(sourceDir, targetDir, var_name: str = ''):
     """
     Map data from source vtk - mesh to target vtk - mesh. (vtks contain pointCloud data)
@@ -545,7 +613,7 @@ def map_vtk2(sourceDir, targetDir, var_name: str = ''):
     target_points = target_mesh.points
 
     data_dim = source_mesh.n_arrays
-    #array_names = source_mesh.array_names
+    # array_names = source_mesh.array_names
 
     if data_dim == 1:
         array_names = var_name
